@@ -29,6 +29,10 @@
 #include <signal.h>
 #include <time.h>
 
+#include <dirent.h>
+#include <sys/un.h>
+#include <sys/socket.h>
+
 #include <dbus/dbus.h>
 
 #include "config_file.h"
@@ -333,6 +337,69 @@ initialize_timer (void)
   pthread_mutex_unlock (&mutex_ctx);
 }
 
+static int
+handle_user_notification()
+{
+
+  FILE *file;
+  DIR *user_run_dir;
+  struct dirent *dir;
+  char* run_dir = "/run/user/";
+  char* socket_file = "/rebootnotification.socket";
+  char* command = "Reboot";
+
+  user_run_dir = opendir(run_dir);
+  if (user_run_dir) {
+    while ((dir = readdir(user_run_dir)) != NULL) {
+
+      if (strcmp(dir->d_name, ".") != 0
+          && strcmp(dir->d_name,"..") != 0) {
+
+        char * socket_name ;
+        if((socket_name = malloc(strlen(run_dir) +
+                 strlen(socket_file) +
+                 strlen(dir->d_name) + 1)) != NULL){
+            socket_name[0] = '\0';   // ensures the memory is an empty string
+            strcat(socket_name, run_dir);
+            strcat(socket_name,dir->d_name);
+            strcat(socket_name,socket_file);
+
+            // if file exists, send to socket.
+            int sd,rc=-1;
+            struct sockaddr_un serveraddr;
+            sd = socket(AF_UNIX, SOCK_STREAM, 0);
+            if (sd < 0)
+            {
+               perror("socket() failed");
+               break;
+            }
+            memset(&serveraddr, 0, sizeof(serveraddr));
+            serveraddr.sun_family = AF_UNIX;
+            strcpy(serveraddr.sun_path, socket_name);
+            rc = connect(sd, (struct sockaddr *)&serveraddr, SUN_LEN(&serveraddr));
+            if (rc < 0)
+            {
+               perror("connect() failed");
+               continue;
+            }
+
+            rc = send(sd, command, sizeof(command), 0);
+            if (rc < 0)
+            {
+               perror("send() failed");
+               break;
+            }
+            if (sd != -1)
+              close(sd);
+        }
+        free(socket_name);
+      }
+    }
+    closedir(user_run_dir);
+  }
+
+  return 0;
+}
 
 /* system is requestion a reboot via dbus interface */
 static void
@@ -392,6 +459,12 @@ do_reboot (void)
       initialize_timer ();
       return;
       break;
+    case RM_REBOOTSTRATEGY_NOTIFY:
+      ctx->reboot_status = RM_REBOOTSTATUS_NOT_REQUESTED;
+
+      handle_user_notification();
+      /* Do nothing */
+      break;
     case RM_REBOOTSTRATEGY_OFF:
       ctx->reboot_status = RM_REBOOTSTATUS_NOT_REQUESTED;
       /* Do nothing */
@@ -404,7 +477,6 @@ do_reboot (void)
     }
   pthread_mutex_unlock (&mutex_ctx);
 }
-
 
 static DBusMessage *
 handle_native_iface (DBusMessage *message)

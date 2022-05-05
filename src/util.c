@@ -74,6 +74,8 @@ string_to_strategy(const char *str_strategy, int *error)
   else if (strcasecmp (str_strategy, "etcd-lock") == 0 ||
            strcasecmp (str_strategy, "etcd_lock") == 0)
     return RM_REBOOTSTRATEGY_ETCD_LOCK;
+  else if (strcasecmp (str_strategy, "notify") == 0)
+    return RM_REBOOTSTRATEGY_NOTIFY;
   else if (strcasecmp (str_strategy, "off") == 0)
     return RM_REBOOTSTRATEGY_OFF;
 
@@ -120,6 +122,8 @@ strategy_to_string(RM_RebootStrategy strategy, int *error)
     return "maint_window";
   case RM_REBOOTSTRATEGY_ETCD_LOCK:
     return "etcd-lock";
+  case RM_REBOOTSTRATEGY_NOTIFY:
+    return "notify";
   case RM_REBOOTSTRATEGY_OFF:
     return "off";
   case RM_REBOOTSTRATEGY_UNKNOWN:

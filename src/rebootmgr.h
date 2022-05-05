@@ -57,6 +57,7 @@ typedef enum RM_RebootStrategy {
   RM_REBOOTSTRATEGY_INSTANTLY,	 /* reboot instantly */
   RM_REBOOTSTRATEGY_MAINT_WINDOW,/* reboot only during maintenance window */
   RM_REBOOTSTRATEGY_ETCD_LOCK,   /* acquire etcd lock before reboot */
+  RM_REBOOTSTRATEGY_NOTIFY,          /* don't reboot, but notify user */
   RM_REBOOTSTRATEGY_OFF          /* don't reboot */
 } RM_RebootStrategy;
 

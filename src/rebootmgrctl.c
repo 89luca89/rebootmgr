@@ -42,7 +42,7 @@ usage (int exit_code)
   printf (_("\trebootmgrctl reboot [fast|now]\n"));
   printf (_("\trebootmgrctl cancel\n"));
   printf (_("\trebootmgrctl status [--quiet]\n"));
-  printf (_("\trebootmgrctl set-strategy best-effort|%smaint-window|\n"),
+  printf (_("\trebootmgrctl set-strategy best-effort|%smaint-window|notify|\n"),
 #ifdef USE_ETCD
 	  "etcd-lock|"
 #else
